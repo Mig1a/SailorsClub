@@ -3,8 +3,8 @@
 // 4/22/2024
 exports.add = function(db, obj, cb) {
   // Insert new sailor into database
-  const sql = `INSERT INTO sailingadventure.Sailors (S_name, B_date, Rate) VALUES (?, ?, ?)`;
-  const values = [obj.S_name, obj.B_date, obj.Rate];
+  const sql = `INSERT INTO sailingadventure.Sailors (S_name, B_date, email, password) VALUES (?, ?, ?,?)`;
+  const values = [obj.S_name, obj.B_date, obj.email, obj.password];
   db.query(sql, values, (err, results) => {
       if (err) {
           return cb(err.message);

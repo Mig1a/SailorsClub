@@ -1,10 +1,9 @@
-// Million Aboye
-// Assignment 3
-// 4/22/2024
+
 const { error, table } = require("console");
 const mysql = require("mysql2");
 const http = require('http')
 const {URL} = require('url')
+
 
 // Importing operations for sailors, boats, and reserves
 const sailorsop = require('./lib/sailors.js')
@@ -13,9 +12,10 @@ const resrvesop = require('./lib/reserves.js')
 
 // Creating a MySQL database connection
 const  db = mysql.createConnection({
-  host: 'it207.c3s66syqix6x.us-east-1.rds.amazonaws.com',
+  host: 'boatapp.c7use4wo6tbg.us-east-1.rds.amazonaws.com',
   user: 'admin',
-  password: 'IT207sql'
+  password: 'Mysql571?',
+  connectTimeout: 30000
 });
 
 // Connecting to the MySQL database
@@ -37,7 +37,8 @@ const sailors = `CREATE TABLE IF NOT EXISTS sailingadventure.Sailors (
     S_ID int AUTO_INCREMENT,
     S_name varchar(100) NOT NULL,
     B_date DATE,
-    Rate INT,
+    email VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
     PRIMARY KEY (S_ID)
 );`;
 
@@ -66,6 +67,7 @@ CREATE TABLE IF NOT EXISTS sailingadventure.Reserves (
     S_ID int,
     B_ID int,
     date DATE,
+    time TIME,
     PRIMARY KEY (S_ID, B_ID),
     FOREIGN KEY (S_ID) REFERENCES Sailors(S_ID),
     FOREIGN KEY (B_ID) REFERENCES Boats(B_ID)
@@ -78,6 +80,16 @@ db.query(reserves, (err) => {
 
 // Handling HTTP requests
 const requestHandler = (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*'); 
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS'); 
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type'); 
+
+  // Handle preflight (OPTIONS) requests
+  if (req.method === 'OPTIONS') {
+      res.writeHead(204); // No Content
+      res.end();
+      return;
+  }
     const baseURL = "http://" + req.headers.host + "/"
     const {pathname, searchParams} = new URL(req.url, baseURL);
     let entries = searchParams.entries();
@@ -88,27 +100,90 @@ const requestHandler = (req, res) => {
     switch(method){
       case 'POST': 
           if (pathname === '/sailors' || pathname === '/sailors/'){
-              sailorsop.add(db, query, (response)=>{
-                  res.setHeader('Content-Type', 'text/plain; charset = "utf-8"')
-                  res.writeHeader(200);
-                  res.end(response);   
-              })
+            let body = '';
+            req.on('data', (chunk) => {
+              body += chunk.toString();
+            });
+
+            // Process the collected data once the request ends
+            req.on('end', () => {
+              try {
+                const data = JSON.parse(body);  
+                sailorsop.add(db, data, (response) => {
+                  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+                  res.writeHead(200);
+                  res.end('Data added successfully');
+              });
+              } catch (err) {
+                res.writeHead(400, { 'Content-Type': 'text/plain' });
+                res.end('Invalid JSON');
+            }
+          });
   
-          } 
-          else if (pathname === '/boats' || pathname === '/boats/'){
+          } else if(pathname === '/signin' || pathname === '/signin/'){
+            let body = '';
+            req.on('data', (chunk) => {
+            body += chunk.toString();
+            });
+            req.on('end', () => {
+              try{
+                const { email, password } = JSON.parse(body);
+
+                // Query the database for the user with the given email
+                const query = 'SELECT * FROM sailingadventure.Sailors WHERE email = ? and password = ?';
+                db.query(query, [email,password], (err, results) => {
+                    if (err) {
+                        res.writeHead(500, { 'Content-Type': 'application/json' });
+                        return res.end(JSON.stringify({ message: 'Internal Server Error' }));
+                    }
+
+                    if (results.length === 0) {
+                        // No user found with this email
+                        res.writeHead(401, { 'Content-Type': 'application/json' });
+                        return res.end(JSON.stringify({ message: 'Invalid email or password' }));
+                    }else{
+                      const sailorId = results[0].S_ID;
+                      res.writeHead(200, { 'Content-Type': 'application/json' });
+                      res.end(JSON.stringify({  token: 'sample-token', S_ID: sailorId }))
+                    }
+
+                });
+
+              }catch (error) {
+                  res.writeHead(400, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ message: 'Invalid JSON' }));
+                }
+
+            });
+
+          } else if (pathname === '/boats' || pathname === '/boats/'){
             boatsop.add(db, query, (response)=>{
                 res.setHeader('Content-Type', 'text/plain; charset = "utf-8"')
                 res.writeHeader(200);
                 res.end(response);   
             })
 
-        }
+          }
           else if (pathname === '/reserves' || pathname === '/reserves/'){
-            resrvesop.add(db, query, (response)=>{
-                res.setHeader('Content-Type', 'text/plain; charset = "utf-8"')
-                res.writeHeader(200);
-                res.end(response);   
-            })
+            let body = '';
+            req.on('data', (chunk) => {
+              body += chunk.toString();
+            });
+            req.on('end', () => {
+              try {
+                  const data = JSON.parse(body);
+                  resrvesop.add(db, data, (response) => {
+                    res.setHeader('Content-Type', 'application/json; charset="utf-8"');
+                    res.writeHead(200);
+                    res.end(JSON.stringify({ message: response }));
+                  });
+              
+                }catch (err) {
+                  res.writeHead(400, { 'Content-Type': 'application/json; charset="utf-8"' });
+                  res.end(JSON.stringify({ error: 'Invalid JSON format' }));
+              }
+          })
+            
 
         }
         break;
@@ -194,7 +269,7 @@ const requestHandler = (req, res) => {
           }else if (pathname === '/reserves' || pathname === '/reserves/'){
             resrvesop.update(db,query,(response)=>{
               res.setHeader('Content-Type', 'text/plain; charset = "utf-8"')
-              res              .writeHeader(200);
+              res.writeHeader(200);
               res.end(response);
             })
           }else{
@@ -208,6 +283,7 @@ const requestHandler = (req, res) => {
 
 // Creating an HTTP server and specifying request handler
 const server = http.createServer(requestHandler)
+
 
 // Handling server close event to close database connection
 server.on('close', () => {

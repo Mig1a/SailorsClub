@@ -1,7 +1,6 @@
-// Million Aboye
-// Assignment 3
-// 4/22/2024
+
 exports.add = function(db, obj, cb) {
+    
   // Check if the Sailor ID exists
   let sqlCheckS_ID = `SELECT * FROM sailingadventure.Sailors WHERE S_ID = ?`;
   let sqlCheckB_ID = `SELECT * FROM sailingadventure.Boats WHERE B_ID = ?`;
@@ -24,8 +23,8 @@ exports.add = function(db, obj, cb) {
           }
 
           // Insert reservation into database
-          let sqlInsert = `INSERT INTO sailingadventure.Reserves (S_ID, B_ID, date) VALUES (?, ?, ?)`;
-          const values = [obj.S_ID, obj.B_ID, obj.date];
+          let sqlInsert = `INSERT INTO sailingadventure.Reserves (S_ID, B_ID, date,time) VALUES (?, ?, ?,?)`;
+          const values = [obj.S_ID, obj.B_ID, obj.date,obj.time];
           db.query(sqlInsert, values, (err, results) => {
               if (err) {
                   return cb(err.message);

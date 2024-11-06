@@ -1,6 +1,4 @@
-// Million Aboye
-// Assignment 3
-// 4/22/2024
+
 exports.add = function(db, obj, cb) {
     // Insert new boat into database
     const sql = `INSERT INTO sailingadventure.Boats (B_Name, B_type) VALUES (?, ?)`;
