@@ -1,4 +1,5 @@
 SailorsClub
+
 SailorsClub is a full-stack web application built with React, Node.js, and AWS SQL. It provides an efficient platform for managing data and user interactions seamlessly across the frontend and backend. This project showcases my skills in developing dynamic interfaces, building robust APIs, and managing databases effectively.
 
 Technologies Used
