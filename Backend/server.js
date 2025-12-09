@@ -12,9 +12,8 @@ const resrvesop = require('./lib/reserves.js')
 
 // Creating a MySQL database connection
 const  db = mysql.createConnection({
-  host: 'boatapp.c7use4wo6tbg.us-east-1.rds.amazonaws.com',
-  user: 'admin',
-  password: '****',
+  
+  
   connectTimeout: 30000
 });
 
